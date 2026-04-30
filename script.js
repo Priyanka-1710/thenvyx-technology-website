@@ -123,7 +123,7 @@ createParticles();
 const form = document.getElementById('contactForm');
 const formMessage = document.getElementById('formMessage');
 
-form.addEventListener('submit', (e) => {
+form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const submitBtn = form.querySelector('.submit-btn');
@@ -150,13 +150,18 @@ form.addEventListener('submit', (e) => {
   submitBtn.innerHTML = '<span>Sending...</span><i class="fas fa-spinner fa-spin"></i>';
   submitBtn.disabled = true;
 
-  // Simulate form submission (replace with actual API call)
-  setTimeout(() => {
-    // Simulate success (90% success rate for demo)
-    const isSuccess = Math.random() > 0.1;
+  // ── Real API Call to Backend ──────────────────────────────────
+  try {
+    const response = await fetch('http://localhost:3000/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
 
-    if (isSuccess) {
-      showFormMessage('Thank you! Your message has been sent successfully. We\'ll get back to you soon!', 'success');
+    const result = await response.json();
+
+    if (result.success) {
+      showFormMessage(result.message, 'success');
       form.reset();
       submitBtn.innerHTML = '<span>Message Sent!</span><i class="fas fa-check"></i>';
 
@@ -166,11 +171,15 @@ form.addEventListener('submit', (e) => {
         submitBtn.disabled = false;
       }, 3000);
     } else {
-      showFormMessage('Oops! Something went wrong. Please try again later.', 'error');
+      showFormMessage(result.message || 'Oops! Something went wrong. Please try again later.', 'error');
       submitBtn.innerHTML = originalText;
       submitBtn.disabled = false;
     }
-  }, 2000);
+  } catch (error) {
+    showFormMessage('Unable to connect to server. Please try again later.', 'error');
+    submitBtn.innerHTML = originalText;
+    submitBtn.disabled = false;
+  }
 });
 
 function showFormMessage(message, type) {
